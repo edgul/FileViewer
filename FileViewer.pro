@@ -24,13 +24,16 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 
 SOURCES += main.cpp \
-    MainWindow.cpp
+    MainWindow.cpp \
+    FileRecord.cpp
 
 HEADERS  += \
-    MainWindow.h
+    MainWindow.h \
+    FileRecord.h
 
 FORMS += \
     MainWindow.ui
 
 DISTFILES += \
-    README.txt
+    README.txt \
+    TESTLOG.txt

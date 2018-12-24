@@ -1,7 +1,24 @@
 
 
+TODO:
+-----
+
+Add support for Windows
+Add support for Mac
+
+
+Compilation:
+------------
+
+Linux:
+    GCC 4.8.4 x86 64bit (Ubuntu 4.8.4-2ubuntu1~14.04.4)
+    Qt 5.7.1
+
+
 Requirements:
 -------------
+
+Windows and Mac
 
 QTableView - control
         Files only (no subdirectories)
