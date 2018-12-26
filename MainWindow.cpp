@@ -40,6 +40,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     watch_folder_dir.setFilter(QDir::Files | QDir::Hidden); // show hidden files and no directories
 
+    connect(&file_system_watcher, SIGNAL(directoryChanged(QString)), this, SLOT(directory_changed(QString)));
+    connect(&file_system_watcher, SIGNAL(fileChanged(QString)), this, SLOT(file_changed(QString)));
+
 }
 
 MainWindow::~MainWindow()
@@ -47,33 +50,13 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::refresh()
+void MainWindow::update_totals()
 {
 
+    // TODO: improve the counting -- should be able to use QDir
     QFileInfoList file_info_list = watch_folder_dir.entryInfoList();
 
     clear();
-
-    // add files to model
-    foreach (QFileInfo file_info, file_info_list)
-    {
-        FileRecord file;
-
-        file.filename = file_info.fileName();
-        file.size = file_info.size();
-
-        QStandardItem * item_file_name = new QStandardItem(0,0);
-        QStandardItem * item_file_size = new QStandardItem(0,1);
-
-        item_file_name->setText(file.filename);
-        item_file_size->setText(QString::number(file.size));
-
-        QList<QStandardItem *> items;
-        items.append(item_file_name);
-        items.append(item_file_size);
-
-        model->appendRow(items);
-    }
 
     // count files and sizes
     int count = 0;
@@ -107,6 +90,76 @@ void MainWindow::on_button_watch_clicked()
     watch_folder();
 }
 
+void MainWindow::directory_changed(QString dir_path)
+{
+    Q_UNUSED(dir_path);
+
+    QList<QString> files_under_watch = file_system_watcher.files();
+
+    QList<QString> all_files_in_dir = watch_folder_dir.entryList();
+
+    // Add new files to watch list
+    QList<QString> added_files;
+    foreach (QString existing_file, all_files_in_dir)
+    {
+        if (files_under_watch.contains(existing_file))
+        {
+            added_files.append(existing_file);
+        }
+    }
+
+    foreach( QString added_file, added_files)
+    {
+        add_file_to_watchlist(added_file);
+    }
+
+    // Remove deleted files from watchlist
+    QList<QString> removed_files;
+    foreach (QString watched_file, files_under_watch)
+    {
+        if (!all_files_in_dir.contains(watched_file))
+        {
+            removed_files.append(watched_file);
+        }
+    }
+
+    foreach (QString removed_file, removed_files)
+    {
+        remove_file_from_watchlist(removed_file);
+    }
+
+    update_totals();
+
+}
+
+void MainWindow::file_changed(QString file_path)
+{
+
+    // TODO: items is empty
+    QList<QStandardItem *> items = model->findItems(file_path);
+
+    QFileInfo file_info(file_path);
+
+    foreach (FileRecord file_record, files)
+    {
+        if (file_record.abs_path == file_path)
+        {
+            file_record.size = file_info.size();
+
+            // TODO: improve model access
+            if (!items.empty())
+            {
+                int item_row = items[0]->row();
+                QStandardItem * item_size = model->item(item_row, 1);
+                item_size->setText(QString::number(file_record.size));
+            }
+            break;
+        }
+    }
+
+    update_totals();
+}
+
 void MainWindow::add_headers_to_model()
 {
     QList<QString> headers;
@@ -118,29 +171,49 @@ void MainWindow::add_headers_to_model()
 
 void MainWindow::watch_folder()
 {
+    clear_watchlist();
+
     // set path and dir
     watch_folder_path = ui->lineedit_folder_path->text();
     watch_folder_dir.setPath(watch_folder_path);
+
+    bool success = file_system_watcher.addPath(watch_folder_path); //  directoryChanged() should fire on success
 
     // UI Feedback
     QString message = "";
     QString message_color;
 
-    if (watch_folder_dir.exists())
+    if (success)
     {
         message = "Watching " + watch_folder_path;
         message_color = "QLabel { color : black; }";
+
+        // Add files to watchlist -- TODO: can remove this if directoryChanged() fires on successful path addition
+        QFileInfoList file_infos = watch_folder_dir.entryInfoList();
+        foreach (QFileInfo file_info, file_infos)
+        {
+            add_file_to_watchlist(file_info.filePath());
+        }
     }
     else
     {
-        message = "Folder does not exist!";
+        message = "Failed to add path. ";
         message_color = "QLabel { color : red; }";
+
+        if (!watch_folder_dir.exists())
+        {
+            message += "Folder does not exist.";
+        }
+        else
+        {
+            message += "System may not have enough resources";
+        }
     }
 
     ui->label_message->setText(message);
     ui->label_message->setStyleSheet(message_color);
 
-    refresh();
+    update_totals();
 }
 
 void MainWindow::clear()
@@ -150,3 +223,62 @@ void MainWindow::clear()
     add_headers_to_model();
 }
 
+void MainWindow::clear_watchlist()
+{
+    QList<QString> dirs_under_watch = file_system_watcher.directories();
+    foreach (QString dir, dirs_under_watch)
+    {
+        file_system_watcher.removePath(dir);
+    }
+
+    QList<QString> files_under_watch = file_system_watcher.files();
+    foreach (QString file, files_under_watch)
+    {
+        file_system_watcher.removePath(file);
+    }
+
+    files.clear();
+}
+
+void MainWindow::add_file_to_watchlist(QString file_path)
+{
+    file_system_watcher.addPath(file_path);
+
+    QFileInfo file_info(file_path);
+
+    FileRecord file;
+    file.abs_path = file_info.absoluteFilePath();
+    file.size = file_info.size();
+
+    int row = files.size();
+    files.append(file);
+
+    // update model
+    QStandardItem * item_file_name = new QStandardItem(row,0);
+    QStandardItem * item_file_size = new QStandardItem(row,1);
+
+    item_file_name->setText(file.abs_path);
+    item_file_size->setText(QString::number(file.size));
+
+    QList<QStandardItem *> items;
+    items.append(item_file_name);
+    items.append(item_file_size);
+
+    model->appendRow(items);
+
+}
+
+void MainWindow::remove_file_from_watchlist(QString file_path)
+{
+    // update watcher
+    file_system_watcher.removePath(file_path);
+
+    // update model
+    QList<QStandardItem *> items = model->findItems(file_path);
+
+    foreach (QStandardItem * item, items)
+    {
+        int item_row = item->row();
+        model->takeRow(item_row);
+    }
+}

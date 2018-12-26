@@ -19,15 +19,19 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
-    void refresh();
+    void update_totals();
 
 private slots:
     void on_button_browse_clicked();
     void on_button_watch_clicked();
 
+    void directory_changed(QString dir_path);
+    void file_changed(QString file_path);
+
 private:
     Ui::MainWindow * ui;
 
+    // TODO: improve model -- currently doesn't update view correctly
     QStandardItemModel * model;
 
     QList<FileRecord> files;
@@ -43,8 +47,9 @@ private:
 
     void clear();
 
-
-
+    void clear_watchlist();
+    void add_file_to_watchlist(QString file_path);
+    void remove_file_from_watchlist(QString file_path);
 
 };
 

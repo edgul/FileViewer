@@ -8,7 +8,7 @@ class FileRecord
 public:
     FileRecord();
 
-    QString filename;
+    QString abs_path;
     int size;
 };
 
