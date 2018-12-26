@@ -17,6 +17,7 @@
 #define DEFAULT_SELECTED_FOLDER "/home"
 #endif
 
+#define SCANNING_TIMER_INTERVAL (1000)
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -36,6 +37,9 @@ MainWindow::MainWindow(QWidget *parent) :
     // stretch header widths
     QHeaderView * header_view = ui->tableview->horizontalHeader();
     header_view->setSectionResizeMode(QHeaderView::Stretch);
+
+    watch_folder_dir.setFilter(QDir::Files | QDir::Hidden); // show hidden files and no directories
+
 }
 
 MainWindow::~MainWindow()
@@ -45,32 +49,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::refresh()
 {
-    QString folder_path = ui->lineedit_folder_path->text();
 
-    QDir folder_dir(folder_path);
-
-    // Feedback for valid folder path
-    QString message = "";
-    QString message_color;
-
-    if (folder_dir.exists())
-    {
-        message = "Displaying folder contents";
-        message_color = "QLabel { color : black; }";
-    }
-    else
-    {
-        message = "Folder does not exist!";
-        message_color = "QLabel { color : red; }";
-    }
-
-    ui->label_message->setText(message);
-    ui->label_message->setStyleSheet(message_color);
-
-    // get files in folder
-    folder_dir.setFilter(QDir::Files | QDir::Hidden);
-
-    QFileInfoList file_info_list = folder_dir.entryInfoList();
+    QFileInfoList file_info_list = watch_folder_dir.entryInfoList();
 
     clear();
 
@@ -109,13 +89,6 @@ void MainWindow::refresh()
 
 }
 
-void MainWindow::clear()
-{
-    model->clear();
-
-    add_headers_to_model();
-}
-
 void MainWindow::on_button_browse_clicked()
 {
     QString dir = QFileDialog::getExistingDirectory(this, tr("Select Directory"),
@@ -125,13 +98,13 @@ void MainWindow::on_button_browse_clicked()
 
     ui->lineedit_folder_path->setText(dir);
 
-    refresh();
+    watch_folder();
 
 }
 
-void MainWindow::on_button_refresh_clicked()
+void MainWindow::on_button_watch_clicked()
 {
-    refresh();
+    watch_folder();
 }
 
 void MainWindow::add_headers_to_model()
@@ -142,3 +115,38 @@ void MainWindow::add_headers_to_model()
 
     model->setHorizontalHeaderLabels(headers);
 }
+
+void MainWindow::watch_folder()
+{
+    // set path and dir
+    watch_folder_path = ui->lineedit_folder_path->text();
+    watch_folder_dir.setPath(watch_folder_path);
+
+    // UI Feedback
+    QString message = "";
+    QString message_color;
+
+    if (watch_folder_dir.exists())
+    {
+        message = "Watching " + watch_folder_path;
+        message_color = "QLabel { color : black; }";
+    }
+    else
+    {
+        message = "Folder does not exist!";
+        message_color = "QLabel { color : red; }";
+    }
+
+    ui->label_message->setText(message);
+    ui->label_message->setStyleSheet(message_color);
+
+    refresh();
+}
+
+void MainWindow::clear()
+{
+    model->clear();
+
+    add_headers_to_model();
+}
+

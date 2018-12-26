@@ -6,6 +6,16 @@ TODO:
 Add support for Windows
 Add support for Mac
 
+Optimized functionality
+* Native detection of file system change
+* Detect deleted file
+* Detect changed file
+* Detect added file
+
+Support changing paths
+
+Only refresh rows when necessary
+
 
 Compilation:
 ------------
