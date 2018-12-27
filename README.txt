@@ -4,7 +4,6 @@ TODO:
 -----
 
 Fix table-update on removal
-Fix table-update on file change
 
 Only refresh rows when necessary
 
@@ -12,6 +11,8 @@ Add support for Windows
 Add support for Mac
 
 Better encapsulation
+Size column formatting
+Filename only in filename column
 
 
 Compilation:

@@ -48,8 +48,10 @@ MainWindow::~MainWindow()
 
 void MainWindow::update_totals()
 {
-
+    // TODO: get file sizes without QDir?
     // TODO: improve the counting -- should be able to use QDir
+
+    reset_watch_folder_dir(); // need fresh dir so entryInfoList up to date
     QFileInfoList file_info_list = watch_folder_dir.entryInfoList();
 
     // count files and sizes
@@ -144,23 +146,11 @@ void MainWindow::directory_changed(QString dir_path)
 
 void MainWindow::file_changed(QString file_path)
 {
-
-    QList<FileRecord> file_records = table_model->files();
-
     QFileInfo file_info(file_path);
 
-    // update model with new size
-    foreach (FileRecord file_record, file_records)
-    {
-        if (file_record.abs_path == file_path)
-        {
-            file_record.size = file_info.size();
-            break;
-        }
-    }
+    table_model->update(file_path, file_info.size());
 
     update_totals();
-
 }
 
 
@@ -234,9 +224,9 @@ void MainWindow::add_file_to_watchlist(QString file_path)
 
     QFileInfo file_info(file_path);
 
-    FileRecord file_record;
-    file_record.abs_path = file_info.absoluteFilePath();
-    file_record.size = file_info.size();
+    FileRecord * file_record = new FileRecord();
+    file_record->abs_path = file_info.absoluteFilePath();
+    file_record->size = file_info.size();
 
     table_model->add_record(file_record);
 

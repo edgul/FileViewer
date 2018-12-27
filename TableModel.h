@@ -14,11 +14,13 @@ class TableModel : public QAbstractTableModel
 public:
     explicit TableModel(QObject *parent = 0);
 
-    QList<FileRecord> files();
+    QList<FileRecord *> files();
+
+    void update(QString record_path, int size);
 
     void clear_files();
 
-    void add_record(FileRecord record);
+    void add_record(FileRecord * record);
     void remove_record(QString record_path);
 
     int record_index(QString record_path);
@@ -40,7 +42,7 @@ public:
 
 private:
 
-    QList<FileRecord> file_records;
+    QList<FileRecord *> file_records;
 };
 
 #endif // TABLEMODEL_H
