@@ -25,11 +25,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += main.cpp \
     MainWindow.cpp \
-    FileRecord.cpp
+    FileRecord.cpp \
+    TableModel.cpp
 
 HEADERS  += \
     MainWindow.h \
-    FileRecord.h
+    FileRecord.h \
+    TableModel.h
 
 FORMS += \
     MainWindow.ui

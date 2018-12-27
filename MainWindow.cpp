@@ -17,28 +17,24 @@
 #define DEFAULT_SELECTED_FOLDER "/home"
 #endif
 
-#define SCANNING_TIMER_INTERVAL (1000)
-
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
 
-    model =  new QStandardItemModel(0, 0, this);
+    table_model =  new TableModel(this);
 
-    ui->tableview->setModel(model);
+    ui->tableview->setModel(table_model);
 
     QString default_folder = DEFAULT_SELECTED_FOLDER;
     ui->lineedit_folder_path->setText(default_folder);
-
-    add_headers_to_model();
 
     // stretch header widths
     QHeaderView * header_view = ui->tableview->horizontalHeader();
     header_view->setSectionResizeMode(QHeaderView::Stretch);
 
-    watch_folder_dir.setFilter(QDir::Files | QDir::Hidden); // show hidden files and no directories
+    reset_watch_folder_dir();
 
     connect(&file_system_watcher, SIGNAL(directoryChanged(QString)), this, SLOT(directory_changed(QString)));
     connect(&file_system_watcher, SIGNAL(fileChanged(QString)), this, SLOT(file_changed(QString)));
@@ -55,8 +51,6 @@ void MainWindow::update_totals()
 
     // TODO: improve the counting -- should be able to use QDir
     QFileInfoList file_info_list = watch_folder_dir.entryInfoList();
-
-    clear();
 
     // count files and sizes
     int count = 0;
@@ -90,19 +84,35 @@ void MainWindow::on_button_watch_clicked()
     watch_folder();
 }
 
+void MainWindow::reset_watch_folder_dir()
+{
+    watch_folder_dir = QDir(); // need to remake the qdir so that latest file can be seen
+    watch_folder_dir.setFilter(QDir::Files | QDir::Hidden); // show hidden files and no directories
+    watch_folder_dir.setPath(watch_folder_path);
+}
+
 void MainWindow::directory_changed(QString dir_path)
 {
     Q_UNUSED(dir_path);
 
     QList<QString> files_under_watch = file_system_watcher.files();
 
-    QList<QString> all_files_in_dir = watch_folder_dir.entryList();
+    reset_watch_folder_dir();
+
+    QList<QFileInfo> all_files_in_dir = watch_folder_dir.entryInfoList();
+
+    QList<QString> all_file_in_dir_paths;
+
+    foreach (QFileInfo file_info, all_files_in_dir)
+    {
+        all_file_in_dir_paths.append( file_info.filePath() );
+    }
 
     // Add new files to watch list
     QList<QString> added_files;
-    foreach (QString existing_file, all_files_in_dir)
+    foreach (QString existing_file, all_file_in_dir_paths)
     {
-        if (files_under_watch.contains(existing_file))
+        if (!files_under_watch.contains(existing_file))
         {
             added_files.append(existing_file);
         }
@@ -117,7 +127,7 @@ void MainWindow::directory_changed(QString dir_path)
     QList<QString> removed_files;
     foreach (QString watched_file, files_under_watch)
     {
-        if (!all_files_in_dir.contains(watched_file))
+        if (!all_file_in_dir_paths.contains(watched_file))
         {
             removed_files.append(watched_file);
         }
@@ -135,39 +145,24 @@ void MainWindow::directory_changed(QString dir_path)
 void MainWindow::file_changed(QString file_path)
 {
 
-    // TODO: items is empty
-    QList<QStandardItem *> items = model->findItems(file_path);
+    QList<FileRecord> file_records = table_model->files();
 
     QFileInfo file_info(file_path);
 
-    foreach (FileRecord file_record, files)
+    // update model with new size
+    foreach (FileRecord file_record, file_records)
     {
         if (file_record.abs_path == file_path)
         {
             file_record.size = file_info.size();
-
-            // TODO: improve model access
-            if (!items.empty())
-            {
-                int item_row = items[0]->row();
-                QStandardItem * item_size = model->item(item_row, 1);
-                item_size->setText(QString::number(file_record.size));
-            }
             break;
         }
     }
 
     update_totals();
+
 }
 
-void MainWindow::add_headers_to_model()
-{
-    QList<QString> headers;
-    headers.append("File Name");
-    headers.append("File Size");
-
-    model->setHorizontalHeaderLabels(headers);
-}
 
 void MainWindow::watch_folder()
 {
@@ -175,7 +170,7 @@ void MainWindow::watch_folder()
 
     // set path and dir
     watch_folder_path = ui->lineedit_folder_path->text();
-    watch_folder_dir.setPath(watch_folder_path);
+    reset_watch_folder_dir();
 
     bool success = file_system_watcher.addPath(watch_folder_path); //  directoryChanged() should fire on success
 
@@ -216,13 +211,6 @@ void MainWindow::watch_folder()
     update_totals();
 }
 
-void MainWindow::clear()
-{
-    model->clear();
-
-    add_headers_to_model();
-}
-
 void MainWindow::clear_watchlist()
 {
     QList<QString> dirs_under_watch = file_system_watcher.directories();
@@ -237,7 +225,7 @@ void MainWindow::clear_watchlist()
         file_system_watcher.removePath(file);
     }
 
-    files.clear();
+    table_model->clear_files();
 }
 
 void MainWindow::add_file_to_watchlist(QString file_path)
@@ -246,25 +234,11 @@ void MainWindow::add_file_to_watchlist(QString file_path)
 
     QFileInfo file_info(file_path);
 
-    FileRecord file;
-    file.abs_path = file_info.absoluteFilePath();
-    file.size = file_info.size();
+    FileRecord file_record;
+    file_record.abs_path = file_info.absoluteFilePath();
+    file_record.size = file_info.size();
 
-    int row = files.size();
-    files.append(file);
-
-    // update model
-    QStandardItem * item_file_name = new QStandardItem(row,0);
-    QStandardItem * item_file_size = new QStandardItem(row,1);
-
-    item_file_name->setText(file.abs_path);
-    item_file_size->setText(QString::number(file.size));
-
-    QList<QStandardItem *> items;
-    items.append(item_file_name);
-    items.append(item_file_size);
-
-    model->appendRow(items);
+    table_model->add_record(file_record);
 
 }
 
@@ -274,11 +248,6 @@ void MainWindow::remove_file_from_watchlist(QString file_path)
     file_system_watcher.removePath(file_path);
 
     // update model
-    QList<QStandardItem *> items = model->findItems(file_path);
+    table_model->remove_record(file_path);
 
-    foreach (QStandardItem * item, items)
-    {
-        int item_row = item->row();
-        model->takeRow(item_row);
-    }
 }

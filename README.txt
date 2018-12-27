@@ -3,14 +3,15 @@
 TODO:
 -----
 
-Fix model-view (update/display)
+Fix table-update on removal
+Fix table-update on file change
+
+Only refresh rows when necessary
 
 Add support for Windows
 Add support for Mac
 
-Support changing paths
-
-Only refresh rows when necessary
+Better encapsulation
 
 
 Compilation:

@@ -3,9 +3,11 @@
 
 #include <QMainWindow>
 #include <QStandardItemModel>
-#include "FileRecord.h"
 #include <QFileSystemWatcher>
 #include <QDir>
+#include <QTimer>
+#include "FileRecord.h"
+#include "TableModel.h"
 
 namespace Ui {
 class MainWindow;
@@ -21,6 +23,8 @@ public:
 
     void update_totals();
 
+    void reset_watch_folder_dir();
+
 private slots:
     void on_button_browse_clicked();
     void on_button_watch_clicked();
@@ -31,21 +35,14 @@ private slots:
 private:
     Ui::MainWindow * ui;
 
-    // TODO: improve model -- currently doesn't update view correctly
-    QStandardItemModel * model;
-
-    QList<FileRecord> files;
+    TableModel * table_model;
 
     QFileSystemWatcher file_system_watcher;
 
     QString watch_folder_path;
     QDir watch_folder_dir;
 
-    void add_headers_to_model();
-
     void watch_folder();
-
-    void clear();
 
     void clear_watchlist();
     void add_file_to_watchlist(QString file_path);
