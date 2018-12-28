@@ -11,9 +11,13 @@
 
 #ifdef Q_OS_LINUX
 #define DEFAULT_SELECTED_FOLDER "/home/ed/git/Test_Folder"
-#elif Q_OS_WIN
+#endif
+
+#ifdef Q_OS_WIN
 #define DEFAULT_SELECTED_FOLDER "C:\\"
-#elif Q_OS_MAC
+#endif
+
+#ifdef Q_OS_MAC
 #define DEFAULT_SELECTED_FOLDER "/home"
 #endif
 
