@@ -1,5 +1,8 @@
 #include "TableModel.h"
 
+#include <iostream>
+#include <QFileInfo>
+
 #define NUM_COLUMNS (2)
 #define COLUMN_INDEX_PATH (0)
 #define COLUMN_INDEX_SIZE (1)
@@ -40,43 +43,48 @@ void TableModel::clear_files()
         removeRow(0);
     }
 
-    file_records.clear();
+    file_records.clear(); // TODO: leak?
 }
 
 void TableModel::add_record(FileRecord * new_record)
 {
-
     int row_index = record_index(new_record->abs_path);
 
     if (row_index == -1) // not found -- add new record
     {
-        insertRow(0);
-        file_records.append(new_record);
-        row_index = file_records.size();
-
-    }
-    else // found -- update an existing record
-    {
-        if (file_records[row_index]->abs_path == new_record->abs_path)
+        int row = file_records.size();
+        if (insertRow(row))
         {
-            file_records[row_index]->size = new_record->size;
+            file_records[row] = new_record;
+        }
+        else
+        {
+            std::cout << QString("(1) Failed to add new record: %1").arg(new_record->abs_path).toStdString();
         }
     }
+    else
+    {
+        std::cout << QString("(2) Failed to add new record: %1").arg(new_record->abs_path).toStdString();
+    }
+
 }
 
 void TableModel::remove_record(QString record_path)
 {
-    for (int i = 0; i < file_records.size(); i++)
-    {
-        FileRecord * record = file_records[i];
+    int r_index = record_index(record_path);
 
-        if (record->abs_path == record_path)
-        {
-            file_records.removeAt(i);
-            delete record;
-            break;
-        }
+    bool success = false;
+    if (r_index != -1)
+    {
+        success = removeRow(r_index);
     }
+    else
+    {
+      std::cout << QString("(1) Failed to remove from model: %1").arg(record_path).toStdString();
+    }
+
+    if (!success) std::cout << QString("(2) Failed to remove from model: %1").arg(record_path).toStdString();
+
 }
 
 int TableModel::record_index(QString record_path)
@@ -143,35 +151,58 @@ QVariant TableModel::data(const QModelIndex &index, int role) const
 
     QVariant result = QVariant();
 
-    if (row >= 0 && row < file_records.size())
+    switch (role)
     {
-        FileRecord * record_at_row = file_records[row];
+        case Qt::DisplayRole:
+        {
+            if (row >= 0 && row < file_records.size())
+            {
+                FileRecord * record_at_row = file_records[row];
 
-        if (column == COLUMN_INDEX_PATH)
-        {
-            result = record_at_row->abs_path;
-        }
-        else if (column == COLUMN_INDEX_SIZE)
-        {
-            result = record_at_row->size;
-        }
+                if (column == COLUMN_INDEX_PATH)
+                {
+                    result = QFileInfo(record_at_row->abs_path).fileName();
+                }
+                else if (column == COLUMN_INDEX_SIZE)
+                {
+                    result = record_at_row->size;
+                }
+            }
+        }break;
     }
+
 
     return result;
 }
 
 bool TableModel::insertRows(int row, int count, const QModelIndex &parent)
 {
-    beginInsertRows(parent, row, row + count - 1);
+    if (row >= 0 && row <= file_records.size())
+    {
+        beginInsertRows(parent, row, row + count - 1);
 
-    endInsertRows();
+        file_records.append(0);
 
-    return true;
+        endInsertRows();
+
+        return true;
+    }
+
+    return false;
 }
 
 bool TableModel::removeRows(int row, int count, const QModelIndex &parent)
 {
-    beginRemoveRows(parent, row, row + count - 1);
+    if (row >= 0 && row < file_records.size())
+    {
+        beginRemoveRows(parent, row, row + count - 1);
 
-    endRemoveRows();
+        FileRecord * record = file_records.takeAt(row);
+        delete record;
+
+        endRemoveRows();
+        return true;
+    }
+
+    return false;
 }

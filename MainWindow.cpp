@@ -146,6 +146,8 @@ void MainWindow::directory_changed(QString dir_path)
 
 void MainWindow::file_changed(QString file_path)
 {
+    QList<QString> files_under_watch = file_system_watcher.files();
+
     QFileInfo file_info(file_path);
 
     table_model->update(file_path, file_info.size());
@@ -173,11 +175,14 @@ void MainWindow::watch_folder()
         message = "Watching " + watch_folder_path;
         message_color = "QLabel { color : black; }";
 
+        std::cout << "Watch clicked: ";
+
         // Add files to watchlist -- TODO: can remove this if directoryChanged() fires on successful path addition
         QFileInfoList file_infos = watch_folder_dir.entryInfoList();
         foreach (QFileInfo file_info, file_infos)
         {
             add_file_to_watchlist(file_info.filePath());
+            std::cout << file_info.filePath().toStdString() << std::endl;
         }
     }
     else
@@ -220,7 +225,12 @@ void MainWindow::clear_watchlist()
 
 void MainWindow::add_file_to_watchlist(QString file_path)
 {
-    file_system_watcher.addPath(file_path);
+    bool success = file_system_watcher.addPath(file_path);
+
+    if (!success)
+    {
+        std::cout << QString("Failed to add to watchlist: %1").arg(file_path).toStdString() << std::endl;
+    }
 
     QFileInfo file_info(file_path);
 
@@ -235,7 +245,9 @@ void MainWindow::add_file_to_watchlist(QString file_path)
 void MainWindow::remove_file_from_watchlist(QString file_path)
 {
     // update watcher
-    file_system_watcher.removePath(file_path);
+    bool success = file_system_watcher.removePath(file_path);
+
+    if (!success) std::cout << QString("Failed to remove from  watchlist: %1").arg(file_path).toStdString() << std::endl;
 
     // update model
     table_model->remove_record(file_path);

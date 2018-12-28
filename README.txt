@@ -3,16 +3,13 @@
 TODO:
 -----
 
-Fix table-update on removal
-
+Sometimes doesn't table-view doesn't remove a removed file (may be a binary issue)
 Only refresh rows when necessary
 
 Add support for Windows
 Add support for Mac
 
 Better encapsulation
-Size column formatting
-Filename only in filename column
 
 
 Compilation:
