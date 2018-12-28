@@ -1,15 +1,19 @@
+README.txt
+**********
 
+Known Issues:
+-------------
 
-TODO:
------
+Sometimes table-view doesn't remove a removed file (may be a binary issue)
+Removing file will redraw all rows
+Added file will redraw all rows
 
-Sometimes doesn't table-view doesn't remove a removed file (may be a binary issue)
-Only refresh rows when necessary
+Use model to count files and sizes, lean less on QDir
+Large number of files untested
 
-Add support for Windows
 Add support for Mac
 
-Better encapsulation
+Improve encapsulation
 
 
 Compilation:
@@ -18,6 +22,10 @@ Compilation:
 Linux:
     GCC 4.8.4 x86 64bit (Ubuntu 4.8.4-2ubuntu1~14.04.4)
     Qt 5.7.1
+
+Windows:
+    MSVC 2013 64bit
+    Qt 5.6.2
 
 
 Requirements:

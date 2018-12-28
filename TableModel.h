@@ -5,8 +5,6 @@
 #include <QList>
 #include "FileRecord.h"
 
-// TODO: remove visible checkboxes in table
-
 class TableModel : public QAbstractTableModel
 {
     Q_OBJECT
@@ -37,7 +35,7 @@ public:
     // Add data:
     bool insertRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
 
-//    // Remove data:
+    // Remove data:
     bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
 
 private:

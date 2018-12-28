@@ -1,28 +1,26 @@
 TESTLOG.txt
 -----------
+                                            (See README for qt-compiler notes)
+                                            Linux   Win   Mac
 
-                                            Linux   Win  Mac
+User selected folder                        PASS    PASS
+* Selectable with dialog                    PASS    PASS
+* Selectable via string                     PASS    PASS
 
-User selected folder                        PASS
-* Selectable with dialog                    PASS
-* Selectable via string                     PASS
+Displays file names and file sizes          PASS    PASS
+* Works with folders with spaces            PASS    PASS
+* Works with files with spaces              PASS    PASS
+* Works with spaces in path                 PASS    PASS
+* Works with differing cases on windows     N/A     PASS
 
-Displays file names and file sizes          PASS
-* Works with folders with spaces            PASS
-* Works with files with spaces              PASS
-* Works with spaces in path                 PASS
-* Works with differing cases on windows     N/A
+Displays total number of files              PASS    PASS
+Displays total file sizes                   PASS    PASS
 
-Displays total number of files              PASS
-Displays total file sizes                   PASS
+Doesn't display folders                     PASS    PASS
 
-Doesn't display folders                     PASS
+Only refresh necessary table cells
+* File changed                              PASS    PASS
+* File Added                                FAIL    FAIL
+* File removed                              FAIL    FAIL
 
-Only refresh files necessary
-
-No scanning on interval
-Large number of files
-
-Detects deletion
-Detects adding
-Detects file change
+Large number of files                       ?       ?

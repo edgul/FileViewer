@@ -52,23 +52,21 @@ MainWindow::~MainWindow()
 
 void MainWindow::update_totals()
 {
-    // TODO: get file sizes without QDir?
-    // TODO: improve the counting -- should be able to use QDir
-
     reset_watch_folder_dir(); // need fresh dir so entryInfoList up to date
     QFileInfoList file_info_list = watch_folder_dir.entryInfoList();
 
-    // count files and sizes
-    int count = 0;
+    // count file sizes
     int total_file_sizes = 0;
     foreach (QFileInfo file_info, file_info_list)
     {
-        count++;
         total_file_sizes += file_info.size();
     }
 
-    ui->label_total_files->setText(QString::number(count));
     ui->label_total_size->setText(QString::number(total_file_sizes));
+
+    // num files
+    uint num_files = watch_folder_dir.count();
+    ui->label_total_files->setText(QString::number(num_files));
 
 }
 
@@ -181,7 +179,7 @@ void MainWindow::watch_folder()
 
         std::cout << "Watch clicked: ";
 
-        // Add files to watchlist -- TODO: can remove this if directoryChanged() fires on successful path addition
+        // Add files to watchlist
         QFileInfoList file_infos = watch_folder_dir.entryInfoList();
         foreach (QFileInfo file_info, file_infos)
         {
