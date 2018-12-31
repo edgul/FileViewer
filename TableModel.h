@@ -19,7 +19,7 @@ public:
     int total_file_size();
     void clear_files();
 
-    void add_record(FileRecord * record);
+    void add_record(QString file_path);
     void remove_record(QString record_path);
 
     int record_index(QString record_path);

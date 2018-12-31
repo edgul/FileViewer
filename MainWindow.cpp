@@ -233,13 +233,7 @@ void MainWindow::add_file_to_watchlist(QString file_path)
     }
     PrintHelper::print(msg);
 
-    QFileInfo file_info(file_path);
-
-    FileRecord * file_record = new FileRecord();
-    file_record->abs_path = file_info.absoluteFilePath();
-    file_record->size = file_info.size();
-
-    table_model->add_record(file_record);
+    table_model->add_record(file_path);
 
 }
 

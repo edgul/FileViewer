@@ -57,9 +57,16 @@ void TableModel::clear_files()
     file_records.clear(); // TODO: leak?
 }
 
-void TableModel::add_record(FileRecord * new_record)
+void TableModel::add_record(QString file_path)
 {
-    int row_index = record_index(new_record->abs_path);
+    QFileInfo file_info(file_path);
+
+    // create the new FileRecord
+    FileRecord * file_record = new FileRecord();
+    file_record->abs_path = file_info.absoluteFilePath();
+    file_record->size = file_info.size();
+
+    int row_index = record_index(file_record->abs_path);
 
     QString msg = "";
     if (row_index == -1) // not found -- add new record
@@ -67,18 +74,18 @@ void TableModel::add_record(FileRecord * new_record)
         int row = file_records.size();
         if (insertRow(row))
         {
-            file_records[row] = new_record;
+            file_records[row] = file_record;
 
-            msg = QString("Added new record: %1").arg(new_record->abs_path);
+            msg = QString("Added new record: %1").arg(file_record->abs_path);
         }
         else
         {
-            msg = QString("(1) Failed to add new record: %1").arg(new_record->abs_path);
+            msg = QString("(1) Failed to add new record: %1").arg(file_record->abs_path);
         }
     }
     else
     {
-        msg = QString("(2) Failed to add new record: %1").arg(new_record->abs_path);
+        msg = QString("(2) Failed to add new record: %1").arg(file_record->abs_path);
     }
 
     PrintHelper::print(msg);
