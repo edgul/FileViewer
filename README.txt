@@ -7,7 +7,6 @@ Known Issues:
 Removing file will redraw all rows
 Added file will redraw all rows
 
-Use model to count files and sizes, lean less on QDir
 Large number of files untested
 
 Add support for Mac
