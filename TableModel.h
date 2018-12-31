@@ -16,6 +16,7 @@ public:
 
     void update(QString record_path, int size);
 
+    int total_file_size();
     void clear_files();
 
     void add_record(FileRecord * record);

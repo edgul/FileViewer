@@ -36,6 +36,17 @@ void TableModel::update(QString record_path, int size)
 
 }
 
+int TableModel::total_file_size()
+{
+    int size = 0;
+    foreach (FileRecord * record, file_records )
+    {
+        size += record->size;
+    }
+
+    return size;
+}
+
 void TableModel::clear_files()
 {
     foreach (auto i, file_records)
@@ -127,10 +138,14 @@ QVariant TableModel::headerData(int section, Qt::Orientation orientation, int ro
             if (section == COLUMN_INDEX_PATH)
             {
                 result = QString("File Name");
+
+                PrintHelper::print("HeaderData: File Name called");
             }
             else if (section == COLUMN_INDEX_SIZE)
             {
                 result = QString("Size (B)");
+
+                PrintHelper::print("HeaderData: Size called");
             }
         }
     }

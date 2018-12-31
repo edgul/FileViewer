@@ -40,8 +40,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     watch_folder_dir.setFilter(QDir::Files | QDir::Hidden); // show hidden files and no directories
 
-    // reset_watch_folder_dir();
-
     connect(&file_system_watcher_dir, SIGNAL(directoryChanged(QString)), this, SLOT(directory_changed(QString)));
     connect(&file_system_watcher_files, SIGNAL(fileChanged(QString)), this, SLOT(file_changed(QString)));
 
@@ -54,20 +52,12 @@ MainWindow::~MainWindow()
 
 void MainWindow::update_totals()
 {
-    watch_folder_dir.refresh();
-    QFileInfoList file_info_list = watch_folder_dir.entryInfoList();
+    // total file size
+    int total_file_size = table_model->total_file_size();
+    ui->label_total_size->setText(QString::number(total_file_size));
 
-    // count file sizes
-    int total_file_sizes = 0;
-    foreach (QFileInfo file_info, file_info_list)
-    {
-        total_file_sizes += file_info.size();
-    }
-
-    ui->label_total_size->setText(QString::number(total_file_sizes));
-
-    // num files
-    uint num_files = watch_folder_dir.count();
+    // total num files
+    int num_files = table_model->rowCount();
     ui->label_total_files->setText(QString::number(num_files));
 
 }
