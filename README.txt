@@ -4,7 +4,6 @@ README.txt
 Known Issues:
 -------------
 
-Sometimes table-view doesn't remove a removed file (may be a binary issue)
 Removing file will redraw all rows
 Added file will redraw all rows
 

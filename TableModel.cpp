@@ -1,7 +1,7 @@
 #include "TableModel.h"
 
-#include <iostream>
 #include <QFileInfo>
+#include "PrintHelper.h"
 
 #define NUM_COLUMNS (2)
 #define COLUMN_INDEX_PATH (0)
@@ -50,28 +50,35 @@ void TableModel::add_record(FileRecord * new_record)
 {
     int row_index = record_index(new_record->abs_path);
 
+    QString msg = "";
     if (row_index == -1) // not found -- add new record
     {
         int row = file_records.size();
         if (insertRow(row))
         {
             file_records[row] = new_record;
+
+            msg = QString("Added new record: %1").arg(new_record->abs_path);
         }
         else
         {
-            std::cout << QString("(1) Failed to add new record: %1").arg(new_record->abs_path).toStdString();
+            msg = QString("(1) Failed to add new record: %1").arg(new_record->abs_path);
         }
     }
     else
     {
-        std::cout << QString("(2) Failed to add new record: %1").arg(new_record->abs_path).toStdString();
+        msg = QString("(2) Failed to add new record: %1").arg(new_record->abs_path);
     }
+
+    PrintHelper::print(msg);
+
 
 }
 
 void TableModel::remove_record(QString record_path)
 {
     int r_index = record_index(record_path);
+    QString msg = "";
 
     bool success = false;
     if (r_index != -1)
@@ -80,10 +87,13 @@ void TableModel::remove_record(QString record_path)
     }
     else
     {
-      std::cout << QString("(1) Failed to remove from model: %1").arg(record_path).toStdString();
+        msg = QString("(1) Failed to remove from model: %1").arg(record_path);
     }
 
-    if (!success) std::cout << QString("(2) Failed to remove from model: %1").arg(record_path).toStdString();
+    msg = QString("Removed row: %1").arg(r_index);
+    if (!success) msg = QString("(2) Failed to remove from model: %1").arg(record_path);
+
+    PrintHelper::print(msg);
 
 }
 
@@ -183,6 +193,8 @@ bool TableModel::insertRows(int row, int count, const QModelIndex &parent)
 
         file_records.append(0);
 
+        PrintHelper::print("Row Added");
+
         endInsertRows();
 
         return true;
@@ -199,6 +211,8 @@ bool TableModel::removeRows(int row, int count, const QModelIndex &parent)
 
         FileRecord * record = file_records.takeAt(row);
         delete record;
+
+        PrintHelper::print("Row removed.");
 
         endRemoveRows();
         return true;

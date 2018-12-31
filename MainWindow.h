@@ -37,7 +37,9 @@ private:
 
     TableModel * table_model;
 
-    QFileSystemWatcher file_system_watcher;
+	// Use two file system watchers as a workaround for apparent bug when removing paths
+    QFileSystemWatcher file_system_watcher_dir;
+    QFileSystemWatcher file_system_watcher_files;
 
     QString watch_folder_path;
     QDir watch_folder_dir;
@@ -46,7 +48,7 @@ private:
 
     void clear_watchlist();
     void add_file_to_watchlist(QString file_path);
-    void remove_file_from_watchlist(QString file_path);
+    void remove_file_from_watchlist(QString file_path, bool dir);
 
 };
 
