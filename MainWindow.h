@@ -23,8 +23,6 @@ public:
 
     void update_totals();
 
-    void reset_watch_folder_dir();
-
 private slots:
     void on_button_browse_clicked();
     void on_button_watch_clicked();

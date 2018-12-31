@@ -38,7 +38,9 @@ MainWindow::MainWindow(QWidget *parent) :
     QHeaderView * header_view = ui->tableview->horizontalHeader();
     header_view->setSectionResizeMode(QHeaderView::Stretch);
 
-    reset_watch_folder_dir();
+    watch_folder_dir.setFilter(QDir::Files | QDir::Hidden); // show hidden files and no directories
+
+    // reset_watch_folder_dir();
 
     connect(&file_system_watcher_dir, SIGNAL(directoryChanged(QString)), this, SLOT(directory_changed(QString)));
     connect(&file_system_watcher_files, SIGNAL(fileChanged(QString)), this, SLOT(file_changed(QString)));
@@ -52,7 +54,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::update_totals()
 {
-    reset_watch_folder_dir(); // need fresh dir so entryInfoList up to date
+    watch_folder_dir.refresh();
     QFileInfoList file_info_list = watch_folder_dir.entryInfoList();
 
     // count file sizes
@@ -88,13 +90,6 @@ void MainWindow::on_button_watch_clicked()
     watch_folder();
 }
 
-void MainWindow::reset_watch_folder_dir()
-{
-    watch_folder_dir = QDir(); // need to remake the qdir so that latest file can be seen
-    watch_folder_dir.setFilter(QDir::Files | QDir::Hidden); // show hidden files and no directories
-    watch_folder_dir.setPath(watch_folder_path);
-}
-
 void MainWindow::directory_changed(QString dir_path)
 {
     Q_UNUSED(dir_path);
@@ -104,7 +99,7 @@ void MainWindow::directory_changed(QString dir_path)
     PrintHelper::print("\nFiles Under watch:");
     PrintHelper::print(files_under_watch);
 
-    reset_watch_folder_dir();
+    watch_folder_dir.refresh();
 
     QList<QFileInfo> all_files_in_dir = watch_folder_dir.entryInfoList();
 
@@ -170,7 +165,9 @@ void MainWindow::watch_folder()
 
     // set path and dir
     watch_folder_path = ui->lineedit_folder_path->text();
-    reset_watch_folder_dir();
+
+    watch_folder_dir.setPath(watch_folder_path);
+    watch_folder_dir.refresh();
 
     bool success = file_system_watcher_dir.addPath(watch_folder_path); //  directoryChanged() should fire on success
 
