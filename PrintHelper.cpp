@@ -1,5 +1,7 @@
 #include "PrintHelper.h"
 
+bool PrintHelper::printing_on = false;
+
 PrintHelper::PrintHelper()
 {
 
@@ -7,17 +9,23 @@ PrintHelper::PrintHelper()
 
 void PrintHelper::print(QString message)
 {
-    if (message != "")
+    if (PrintHelper::printing_on)
     {
-        std::cout << QString(message).toStdString() << std::endl;
-        std::flush(std::cout);
+        if (message != "")
+        {
+            std::cout << QString(message).toStdString() << std::endl;
+            std::flush(std::cout);
+        }
     }
 }
 
 void PrintHelper::print(QList<QString> list)
 {
-    foreach (QString item, list)
+    if (PrintHelper::printing_on)
     {
-        print(item);
+        foreach (QString item, list)
+        {
+            print(item);
+        }
     }
 }

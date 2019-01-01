@@ -14,6 +14,7 @@ public:
 
     static void print(QList<QString> list);
 
+    static bool printing_on;
 };
 
 #endif // PRINTHELPER_H
