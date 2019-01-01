@@ -4,10 +4,9 @@ README.txt
 Known Issues:
 -------------
 
-Removing file will redraw all rows
-Added file will redraw all rows
-
-Large number of files untested
+A bit slow when adding/removing files:
+* Removing file will redraw all rows
+* Added file will redraw all rows
 
 Add support for Mac
 
@@ -22,8 +21,8 @@ Linux:
     Qt 5.7.1
 
 Windows:
-    MSVC 2013 64bit
-    Qt 5.6.2
+    MSVC 2013 64bit & Qt 5.6.2
+    MSVC 2017 64bit & Qt 5.11.3
 
 
 Requirements:
