@@ -28,8 +28,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     table_model =  new TableModel(this);
-
     ui->tableview->setModel(table_model);
+    connect(table_model, SIGNAL(directory_changed()), this, SLOT(apply_directory_changes()));
+    connect(table_model, SIGNAL(file_changed()), this, SLOT(file_changed()));
 
     QString default_folder = DEFAULT_SELECTED_FOLDER;
     ui->lineedit_folder_path->setText(default_folder);
@@ -39,10 +40,6 @@ MainWindow::MainWindow(QWidget *parent) :
     header_view->setSectionResizeMode(QHeaderView::Stretch);
 
     watch_folder_dir.setFilter(QDir::Files | QDir::Hidden); // show hidden files and no directories
-
-    connect(&file_system_watcher_dir, SIGNAL(directoryChanged(QString)), this, SLOT(directory_changed(QString)));
-    connect(&file_system_watcher_files, SIGNAL(fileChanged(QString)), this, SLOT(file_changed(QString)));
-
 }
 
 MainWindow::~MainWindow()
@@ -72,7 +69,6 @@ void MainWindow::on_button_browse_clicked()
     ui->lineedit_folder_path->setText(dir);
 
     watch_folder();
-
 }
 
 void MainWindow::on_button_watch_clicked()
@@ -80,78 +76,61 @@ void MainWindow::on_button_watch_clicked()
     watch_folder();
 }
 
-void MainWindow::directory_changed(QString dir_path)
+void MainWindow::apply_directory_changes()
 {
-    Q_UNUSED(dir_path);
-
-    QList<QString> files_under_watch = file_system_watcher_files.files();
+    QList<QString> files_under_watch = table_model->files_under_watch();
 
     PrintHelper::print("\nFiles Under watch:");
     PrintHelper::print(files_under_watch);
 
-    watch_folder_dir.refresh();
-
-    QList<QFileInfo> all_files_in_dir = watch_folder_dir.entryInfoList();
-
-    QList<QString> all_file_in_dir_paths;
-
-    foreach (QFileInfo file_info, all_files_in_dir)
-    {
-        all_file_in_dir_paths.append( file_info.filePath() );
-    }
+    QList<QString> all_file_in_dir_paths = all_file_paths_in_dir();
 
     PrintHelper::print("\nFiles currently in dir:");
     PrintHelper::print(all_file_in_dir_paths);
 
     // Add new files to watch list
-    QList<QString> added_files;
+    QList<QString> files_to_add;
     foreach (QString existing_file, all_file_in_dir_paths)
     {
         if (!files_under_watch.contains(existing_file))
         {
-            added_files.append(existing_file);
+            files_to_add.append(existing_file);
         }
     }
 
-    foreach( QString added_file, added_files)
+    foreach(QString file_to_add, files_to_add)
     {
-        add_file(added_file);
+        table_model->add_file(file_to_add);
     }
 
     // Remove deleted files from watchlist
-    QList<QString> removed_files;
+    QList<QString> files_to_remove;
     foreach (QString watched_file, files_under_watch)
     {
         if (!all_file_in_dir_paths.contains(watched_file))
         {
-            removed_files.append(watched_file);
+            files_to_remove.append(watched_file);
         }
     }
 
-    foreach (QString removed_file, removed_files)
+    foreach (QString file_to_remove, files_to_remove)
     {
-        remove_file(removed_file, false);
+        table_model->remove_file(file_to_remove);
     }
 
     update_totals();
-
 }
 
 void MainWindow::file_changed(QString file_path)
 {
-    QList<QString> files_under_watch = file_system_watcher_files.files();
-
-    QFileInfo file_info(file_path);
-
-    table_model->update(file_path, file_info.size());
+    Q_UNUSED(file_path);
 
     update_totals();
 }
 
-
 void MainWindow::watch_folder()
 {
-    clear_watchlist();
+    table_model->clear();
 
     // set path and dir
     watch_folder_path = ui->lineedit_folder_path->text();
@@ -159,7 +138,7 @@ void MainWindow::watch_folder()
     watch_folder_dir.setPath(watch_folder_path);
     watch_folder_dir.refresh();
 
-    bool success = file_system_watcher_dir.addPath(watch_folder_path); //  directoryChanged() should fire on success
+    bool success = table_model->add_dir(watch_folder_path); //  directoryChanged() should fire on success
 
     // UI Feedback
     QString message = "";
@@ -176,7 +155,7 @@ void MainWindow::watch_folder()
         QFileInfoList file_infos = watch_folder_dir.entryInfoList();
         foreach (QFileInfo file_info, file_infos)
         {
-            add_file(file_info.filePath());
+            table_model->add_file(file_info.filePath());
         }
     }
     else
@@ -200,50 +179,16 @@ void MainWindow::watch_folder()
     update_totals();
 }
 
-void MainWindow::clear_watchlist()
+QList<QString> MainWindow::all_file_paths_in_dir()
 {
-    QList<QString> dirs_under_watch = file_system_watcher_dir.directories();
-    foreach (QString dir, dirs_under_watch)
+    watch_folder_dir.refresh(); // make sure dir is fresh
+    QList<QFileInfo> all_files_in_dir = watch_folder_dir.entryInfoList();
+
+    QList<QString> all_file_in_dir_paths;
+    foreach (QFileInfo file_info, all_files_in_dir)
     {
-        file_system_watcher_dir.removePath(dir);
-        remove_file(dir, true);
+        all_file_in_dir_paths.append( file_info.filePath() );
     }
 
-    QList<QString> files_under_watch = file_system_watcher_files.files();
-    foreach (QString file, files_under_watch)
-    {
-        file_system_watcher_files.removePath(file);
-        remove_file(file, false);
-    }
-
-    table_model->clear_files();
-}
-
-void MainWindow::add_file(QString file_path)
-{
-    bool success = file_system_watcher_files.addPath(file_path);
-
-    QString msg = "" ;
-
-    if (success)
-    {
-        msg = QString("Added to watchlist: %1").arg(file_path);
-    }
-    else
-    {
-        msg = QString("Failed to add to watchlist: %1").arg(file_path);
-    }
-    PrintHelper::print(msg);
-
-    table_model->add_record(file_path);
-
-}
-
-void MainWindow::remove_file(QString file_path, bool dir)
-{
-    // watcher will remove deleted files automatically
-
-    // update model
-    table_model->remove_record(file_path);
-
+    return all_file_in_dir_paths;
 }

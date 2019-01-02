@@ -10,12 +10,44 @@
 TableModel::TableModel(QObject *parent)
     : QAbstractTableModel(parent)
 {
+    connect(&file_system_watcher_dir, SIGNAL(directoryChanged(QString)), this, SLOT(directory_changed(QString)));
+    connect(&file_system_watcher_files, SIGNAL(fileChanged(QString)), this, SLOT(file_change_detected(QString)));
 
+
+    directory_changed_delay_timer.setSingleShot(true);
+    connect(&directory_changed_delay_timer, SIGNAL(timeout()), this, SLOT(directory_changed_delay_timer_tick()));
+
+    files_changed_delay_timer.setSingleShot(true);
+    connect(&files_changed_delay_timer, SIGNAL(timeout()), this, SLOT(file_changed_delay_timer_tick()));
 }
 
-QList<FileRecord *> TableModel::files()
+void TableModel::clear_dirs_from_watchlist()
 {
-    return file_records;
+    QList<QString> dirs_under_watch = file_system_watcher_dir.directories();
+    foreach (QString dir, dirs_under_watch)
+    {
+        file_system_watcher_dir.removePath(dir);
+    }
+}
+
+void TableModel::clear()
+{
+    clear_dirs_from_watchlist();
+
+    // clear files from watchlist and records
+    QList<QString> files = files_under_watch();
+    foreach (QString file, files)
+    {
+        file_system_watcher_files.removePath(file);
+        remove_record(file);
+    }
+
+    clear_files();
+}
+
+QList<QString> TableModel::files_under_watch()
+{
+    return files_under_watch_cache;
 }
 
 void TableModel::update(QString record_path, int size)
@@ -53,12 +85,18 @@ void TableModel::clear_files()
     {
         removeRow(0);
     }
-
-    qDeleteAll(file_records);
 }
 
-void TableModel::add_record(QString file_path)
+void TableModel::add_file(QString file_path)
 {
+    // Add to file_system_watcher
+    bool success = file_system_watcher_files.addPath(file_path);
+    if (success) files_under_watch_cache.append(file_path);
+
+    QString msg = QString("Added to watchlist: %1").arg(file_path);
+    if (!success) msg = QString("Failed to add to watchlist: %1").arg(file_path);
+    PrintHelper::print(msg);
+
     QFileInfo file_info(file_path);
 
     // create the new FileRecord
@@ -68,7 +106,7 @@ void TableModel::add_record(QString file_path)
 
     int row_index = record_index(file_record->abs_path);
 
-    QString msg = "";
+    msg = "";
     if (row_index == -1) // not found -- add new record
     {
         int row = file_records.size();
@@ -89,8 +127,15 @@ void TableModel::add_record(QString file_path)
     }
 
     PrintHelper::print(msg);
+}
 
+void TableModel::remove_file(QString file_path)
+{
+    // watcher will remove deleted files automatically
 
+    files_under_watch_cache.removeAll(file_path);
+
+    remove_record(file_path);
 }
 
 void TableModel::remove_record(QString record_path)
@@ -113,6 +158,15 @@ void TableModel::remove_record(QString record_path)
 
     PrintHelper::print(msg);
 
+}
+
+bool TableModel::add_dir(QString dir_path)
+{
+    clear_dirs_from_watchlist(); // only 1 dir under watch
+
+    bool result = file_system_watcher_dir.addPath(dir_path);
+
+    return result;
 }
 
 int TableModel::record_index(QString record_path)
@@ -243,4 +297,38 @@ bool TableModel::removeRows(int row, int count, const QModelIndex &parent)
     }
 
     return false;
+}
+
+void TableModel::directory_changed(QString dir_path)
+{
+    Q_UNUSED(dir_path);
+
+    // When many changes are happening at once table update is slow because processing happens per file change
+    // Attempt to only run processing once per set of changes by adding a delay
+    directory_changed_delay_timer.start(1000);
+
+}
+
+void TableModel::file_change_detected(QString file_path)
+{
+    files_changed_delay_timer.start(1000);
+
+    files_that_have_changed.append(file_path);
+}
+
+void TableModel::directory_changed_delay_timer_tick()
+{
+    emit directory_changed();
+}
+
+void TableModel::file_changed_delay_timer_tick()
+{
+    foreach (QString file_path, files_that_have_changed)
+    {
+        QFileInfo file_info(file_path);
+        update(file_path, file_info.size());
+    }
+    files_that_have_changed.clear();
+
+    emit file_changed();
 }

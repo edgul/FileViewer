@@ -23,4 +23,4 @@ Only refresh necessary table cells
 * File Added                                FAIL    FAIL
 * File removed                              FAIL    FAIL
 
-Works with upto 1000 files                  ?       PASS
+Works with up to 10000 files                ?       PASS

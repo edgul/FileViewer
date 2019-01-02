@@ -3,7 +3,6 @@
 
 #include <QMainWindow>
 #include <QStandardItemModel>
-#include <QFileSystemWatcher>
 #include <QDir>
 #include <QTimer>
 #include "FileRecord.h"
@@ -27,7 +26,7 @@ private slots:
     void on_button_browse_clicked();
     void on_button_watch_clicked();
 
-    void directory_changed(QString dir_path);
+    void apply_directory_changes();
     void file_changed(QString file_path);
 
 private:
@@ -35,18 +34,12 @@ private:
 
     TableModel * table_model;
 
-	// Use two file system watchers as a workaround for apparent bug when removing paths
-    QFileSystemWatcher file_system_watcher_dir;
-    QFileSystemWatcher file_system_watcher_files;
-
     QString watch_folder_path;
     QDir watch_folder_dir;
 
     void watch_folder();
 
-    void clear_watchlist();
-    void add_file(QString file_path);
-    void remove_file(QString file_path, bool dir);
+    QList<QString> all_file_paths_in_dir();
 
 };
 

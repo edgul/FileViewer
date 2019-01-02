@@ -1,16 +1,15 @@
 README.txt
 **********
 
+A file viewer that will automatically update as changes happen within the directory the program is set to watch.
+
 Known Issues:
 -------------
 
-A bit slow when adding/removing files:
-* Removing file will redraw all rows
-* Added file will redraw all rows
+Removing file will redraw all rows
+Added file will redraw all rows
 
 Add support for Mac
-
-Improve encapsulation
 
 
 Compilation:
