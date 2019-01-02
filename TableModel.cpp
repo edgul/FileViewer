@@ -54,7 +54,7 @@ void TableModel::clear_files()
         removeRow(0);
     }
 
-    file_records.clear(); // TODO: leak?
+    qDeleteAll(file_records);
 }
 
 void TableModel::add_record(QString file_path)
