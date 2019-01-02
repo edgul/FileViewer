@@ -45,8 +45,8 @@ private:
     void watch_folder();
 
     void clear_watchlist();
-    void add_file_to_watchlist(QString file_path);
-    void remove_file_from_watchlist(QString file_path, bool dir);
+    void add_file(QString file_path);
+    void remove_file(QString file_path, bool dir);
 
 };
 
