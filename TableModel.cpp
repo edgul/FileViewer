@@ -207,30 +207,6 @@ QVariant TableModel::data(const QModelIndex &index, int role) const
     return result;
 }
 
-//bool TableModel::setData(const QModelIndex &index, const QVariant &value, int role)
-//{
-//    if (role != Qt::DisplayRole) return false;
-
-//    int row = index.row();
-//    int col = index.column();
-
-//    if (row >= 0 && row < file_records.size())
-//    {
-//        if (col == 0)
-//        {
-//            file_records[row]->abs_path = value.toString();
-//            return true;
-//        }
-//        else if (col == 1)
-//        {
-//            file_records[row]->size = value.toInt();
-//            return true;
-//        }
-//    }
-
-//    return false;
-//}
-
 bool TableModel::insertRows(int row, int count, const QModelIndex &parent)
 {
     if (row >= 0 && row <= file_records.size())
